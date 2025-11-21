@@ -335,6 +335,68 @@ def mutacao_por_troca(filho, parametros): # Usada para testes
     return individuo
 
 '''
+    Função mutacao_permutacional_auxiliar:
+        Realiza mutação permutacional por linha: troca dois valores não-fixos dentro de uma mesma linha.
+        Mantém as células fixas intactas e preserva a propriedade de permutação.
+    Parâmetros:
+        matriz - matriz do indivíduo a ser mutado.
+        taxa_mutacao - taxa de mutação (0 a 100).
+        matriz_base - matriz base com células fixas.
+    Retorno:
+        Matriz após ser mutada.
+'''
+@njit
+def mutacao_permutacional_auxiliar(matriz, taxa_mutacao, matriz_base):
+    nova_matriz = matriz.copy()
+    probabilidade_mutacao = taxa_mutacao / 100
+    
+    # Para cada linha, verifica se haverá mutação
+    for linha in range(9):
+        if np.random.random() <= probabilidade_mutacao:
+            # Identifica posições não-fixas nesta linha
+            posicoes_nao_fixas = []
+            for coluna in range(9):
+                if matriz_base[linha, coluna] == 0:
+                    posicoes_nao_fixas.append(coluna)
+            
+            # Se houver pelo menos 2 posições não-fixas, faz a troca
+            if len(posicoes_nao_fixas) >= 2:
+                # Escolhe 2 posições aleatórias diferentes
+                idx1, idx2 = np.random.choice(np.arange(len(posicoes_nao_fixas)), 2, replace=False)
+                col1 = posicoes_nao_fixas[idx1]
+                col2 = posicoes_nao_fixas[idx2]
+                
+                # Troca os valores
+                temp = nova_matriz[linha, col1]
+                nova_matriz[linha, col1] = nova_matriz[linha, col2]
+                nova_matriz[linha, col2] = temp
+    
+    return nova_matriz
+
+'''
+    Função mutacao_permutacional:
+        Utiliza a função mutacao_permutacional_auxiliar para realizar mutação por troca em linha.
+    Parâmetros:
+        filho - um dos indivíduos da população.
+        parametros - classe Parametros.
+    Retorno:
+        Indivíduo mutado.
+'''
+def mutacao_permutacional(filho, parametros):
+    individuo = Individuo(filho.fitness, filho.matriz)
+
+    # Certifica que a matriz do filho não é None
+    if filho.matriz is None:
+        return Individuo(filho.fitness, None)
+
+    # Realiza a mutação permutacional
+    matriz_mutada = mutacao_permutacional_auxiliar(filho.matriz, parametros.mutacao, parametros.matriz_base)
+    
+    individuo.matriz = matriz_mutada
+
+    return individuo
+
+'''
     Função recombinacao_uniforme_auxiliar:
         Aplica a recombinação uniforme, combinando aleatoriamente os genes (cada célula)
         da matriz pai e mãe nas células do filho que podem ser recombinadas, ou seja, que não são fixas.
@@ -450,6 +512,60 @@ def recombinacao_ponto_unico(pai, mae, parametros): # Usada para testes
     return filho
 
 '''
+    Função recombinacao_permutacional_auxiliar:
+        Realiza cruzamento permutacional por linha: para cada linha, escolhe aleatoriamente
+        herdar a permutação completa do pai ou da mãe.
+    Parâmetros:
+        matriz_pai - matriz do pai.
+        matriz_mae - matriz da mãe.
+        matriz_base - matriz base com células fixas.
+    Retorno:
+        Matriz do filho resultante da combinação entre pai e mãe.
+'''
+@njit
+def recombinacao_permutacional_auxiliar(matriz_pai, matriz_mae, matriz_base):
+    filho = matriz_base.copy()
+    
+    # Para cada linha, escolhe aleatoriamente do pai ou da mãe
+    for linha in range(9):
+        if np.random.randint(0, 2) == 0:
+            # Herda a linha do pai
+            for coluna in range(9):
+                if matriz_base[linha, coluna] == 0:
+                    filho[linha, coluna] = matriz_pai[linha, coluna]
+        else:
+            # Herda a linha da mãe
+            for coluna in range(9):
+                if matriz_base[linha, coluna] == 0:
+                    filho[linha, coluna] = matriz_mae[linha, coluna]
+    
+    return filho
+
+'''
+    Função recombinacao_permutacional:
+        Utiliza a função recombinacao_permutacional_auxiliar para realizar cruzamento por linha.
+    Parâmetros:
+        pai - um dos indivíduos da população.
+        mae - um dos indivíduos da população.
+        parametros - classe Parametros.
+    Retorno:
+        Indivíduo filho resultante da combinação entre pai e mãe.
+'''
+def recombinacao_permutacional(pai, mae, parametros):
+    filho = Individuo()
+
+    # Certifica que os pais têm matrizes para recombinar
+    if pai.matriz is None or mae.matriz is None:
+        return Individuo()
+
+    # Realiza a recombinação permutacional
+    matriz_filho = recombinacao_permutacional_auxiliar(pai.matriz, mae.matriz, parametros.matriz_base)
+    
+    filho.matriz = matriz_filho
+
+    return filho
+
+'''
     Função selecao_por_torneio:
         Seleciona dois a dois indivíduos da população e determina qual deles possui o menor fitness.
     Parâmetros:
@@ -551,11 +667,13 @@ def reproducao(populacao, parametros):
         mae = selecao_por_torneio(populacao, parametros)
         #pai = selecao_por_roleta(populacao)
         #mae = selecao_por_roleta(populacao)
-        filho = recombinacao_uniforme(pai, mae, parametros)
+        filho = recombinacao_permutacional(pai, mae, parametros)
+        #filho = recombinacao_uniforme(pai, mae, parametros)
         #filho = recombinacao_ponto_unico(pai, mae, parametros)
+        filho = mutacao_permutacional(filho, parametros)
         #filho = mutacao_uniforme(filho, parametros)
         #filho = mutacao_por_troca(filho, parametros)
-        filho = mutacao_por_gene(filho, parametros)
+        #filho = mutacao_por_gene(filho, parametros)
         filho.fitness = fitness(filho.matriz)
 
         nova_populacao[i] = filho
@@ -567,6 +685,74 @@ def reproducao(populacao, parametros):
         populacao[i] = nova_populacao[i]
 
     return melhor
+
+'''
+    Função gera_matrizes_aleatorias_permutacionais:
+        Gera matrizes aleatórias onde cada linha é uma permutação dos números 1-9,
+        respeitando as células fixas da matriz base.
+    Parâmetros:
+        tamanho_populacao - número de matrizes a serem geradas.
+        numeros_validos - números válidos (1-9).
+        matriz_base - matriz base com células fixas.
+    Retorno:
+        Lista de matrizes aleatórias geradas.
+'''
+@njit
+def gera_matrizes_aleatorias_permutacionais(tamanho_populacao, numeros_validos, matriz_base):
+    # Caso a matriz base seja None ou vazia, retorna lista vazia
+    if matriz_base is None or matriz_base.size == 0:
+        return [np.zeros((9, 9), dtype=np.int64) for _ in range(tamanho_populacao)]
+    
+    matrizes = []
+
+    for _ in range(tamanho_populacao):
+        matriz = matriz_base.copy()
+        
+        # Para cada linha, preenche com uma permutação válida
+        for linha in range(9):
+            # Identifica os números já fixos nesta linha
+            numeros_fixos_count = 0
+            posicoes_vazias_count = 0
+            numeros_fixos_temp = np.zeros(9, dtype=np.int64)
+            posicoes_vazias_temp = np.zeros(9, dtype=np.int64)
+            
+            for coluna in range(9):
+                if matriz_base[linha, coluna] != 0:
+                    numeros_fixos_temp[numeros_fixos_count] = matriz_base[linha, coluna]
+                    numeros_fixos_count += 1
+                else:
+                    posicoes_vazias_temp[posicoes_vazias_count] = coluna
+                    posicoes_vazias_count += 1
+            
+            # Calcula quais números faltam para completar a permutação
+            numeros_faltantes_count = 0
+            numeros_faltantes_temp = np.zeros(9, dtype=np.int64)
+            
+            for num in numeros_validos:
+                encontrado = False
+                for i in range(numeros_fixos_count):
+                    if numeros_fixos_temp[i] == num:
+                        encontrado = True
+                        break
+                if not encontrado:
+                    numeros_faltantes_temp[numeros_faltantes_count] = num
+                    numeros_faltantes_count += 1
+            
+            # Embaralha os números faltantes (usando permutação aleatória)
+            numeros_faltantes = numeros_faltantes_temp[:numeros_faltantes_count]
+            indices = np.arange(numeros_faltantes_count)
+            np.random.shuffle(indices)
+            numeros_faltantes = numeros_faltantes[indices]
+            
+            # Preenche as posições vazias com os números faltantes
+            for idx in range(posicoes_vazias_count):
+                if idx < numeros_faltantes_count:
+                    coluna = posicoes_vazias_temp[idx]
+                    matriz[linha, coluna] = numeros_faltantes[idx]
+        
+        matrizes.append(matriz)
+
+    return matrizes
 
 '''
     Função gera_matrizes_aleatorias:
@@ -673,11 +859,11 @@ def inicializa(populacao, parametros):
     # Recalcula as células vazias com base na nova matriz_base.
     #parametros.atualizar_celulas_vazias()
     
-    matrizes_geradas = gera_matrizes_aleatorias(
+    # Usa geração permutacional: cada linha é uma permutação de 1-9
+    matrizes_geradas = gera_matrizes_aleatorias_permutacionais(
         parametros.populacao, 
         parametros.numeros_validos, 
-        parametros.matriz_base, 
-        parametros.celulas_vazias
+        parametros.matriz_base
     )
     
     for i in range(parametros.populacao):
@@ -710,7 +896,11 @@ def main():
     
     inicio = time.time()
 
-    #escreve_arquivo()
+    # Cria o arquivo entrada.in se não existir
+    import os
+    if not os.path.exists('entrada.in'):
+        escreve_arquivo()
+    
     parametros = le_arquivo()
 
     geracao = 0
