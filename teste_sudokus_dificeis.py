@@ -1,60 +1,84 @@
 """
-Script para testar o algoritmo genético com sudokus de diferentes níveis de dificuldade.
+Script para testar o algoritmo genético com sudokus de nível MÉDIO e DIFÍCIL.
 """
 import numpy as np
 import struct
 import subprocess
 import time
 
-# Definição dos sudokus de teste
+# Definição dos sudokus de teste - MÉDIOS E DIFÍCEIS
 
 SUDOKUS = {
-    "Facil1": np.array([
-        [0,3,0, 0,6,8, 1,7,0],
-        [0,0,0, 1,0,0, 0,0,3],
-        [0,1,0, 7,3,2, 9,0,0],
-        [0,8,0, 0,1,4, 0,5,0],
-        [6,4,0, 0,0,0, 0,9,1],
-        [0,5,0, 9,8,0, 0,2,0],
-        [0,0,2, 3,9,7, 0,1,0],
-        [4,0,0, 0,0,6, 0,0,0],
-        [0,7,8, 4,5,0, 0,6,0]
+    "Medio1": np.array([
+        [0,0,0, 0,0,0, 0,8,5],
+        [0,0,0, 2,1,0, 0,0,9],
+        [9,6,0, 0,8,0, 1,0,0],
+        [5,0,0, 8,0,0, 0,1,6],
+        [0,0,0, 0,0,0, 0,0,0],
+        [8,9,0, 0,0,6, 0,0,7],
+        [0,0,9, 0,7,0, 0,5,2],
+        [3,0,0, 0,5,4, 0,0,0],
+        [4,8,0, 0,0,0, 0,0,0]
     ]),
     
-    "Facil2": np.array([
-        [0,0,3, 0,2,0, 6,0,0],
-        [9,0,0, 3,0,5, 0,0,1],
-        [0,0,1, 8,0,6, 4,0,0],
-        [0,0,8, 1,0,2, 9,0,0],
-        [7,0,0, 0,0,0, 0,0,8],
-        [0,0,6, 7,0,8, 2,0,0],
-        [0,0,2, 6,0,9, 5,0,0],
-        [8,0,0, 2,0,3, 0,0,9],
-        [0,0,5, 0,1,0, 3,0,0]
+    "Medio2": np.array([
+        [0,0,0, 0,0,0, 0,0,0],
+        [0,7,9, 0,5,0, 1,8,0],
+        [8,0,0, 0,0,0, 0,0,7],
+        [0,0,7, 3,0,6, 8,0,0],
+        [4,5,0, 7,0,8, 0,9,6],
+        [0,0,3, 5,0,2, 7,0,0],
+        [7,0,0, 0,0,0, 0,0,5],
+        [0,1,6, 0,3,0, 4,2,0],
+        [0,0,0, 0,0,0, 0,0,0]
     ]),
     
-    "Facil3": np.array([
-        [8,0,2, 0,5,0, 7,0,1],
-        [0,0,7, 0,8,2, 4,6,0],
-        [0,1,0, 9,0,0, 0,0,0],
-        [6,0,0, 0,0,1, 8,3,2],
-        [5,0,0, 0,0,0, 0,0,9],
-        [1,8,4, 3,0,0, 0,0,6],
-        [0,0,0, 0,0,4, 0,2,0],
-        [0,9,5, 6,1,0, 3,0,0],
-        [3,0,8, 0,9,0, 6,0,7]
+    "Medio3": np.array([
+        [3,8,0, 0,0,0, 0,0,0],
+        [0,0,0, 4,0,0, 7,8,5],
+        [0,0,9, 0,2,0, 3,0,0],
+        [0,6,0, 0,9,0, 0,0,0],
+        [8,0,0, 3,0,2, 0,0,9],
+        [0,0,0, 0,4,0, 0,7,0],
+        [0,0,1, 0,7,0, 5,0,0],
+        [4,9,5, 0,0,6, 0,0,0],
+        [0,0,0, 0,0,0, 0,9,2]
     ]),
     
-    "Original": np.array([
-        [0,8,4, 0,7,2, 1,0,5], 
-        [2,0,7, 8,3,0, 9,0,0], 
-        [6,0,0, 5,0,9, 0,0,8], 
-        [0,6,0, 9,2,8, 4,0,0],
-        [0,7,0, 0,0,0, 0,6,9], 
-        [0,2,0, 0,0,0, 0,8,1], 
-        [0,3,2, 0,5,0, 6,9,4], 
-        [7,0,0, 0,0,0, 0,0,2], 
-        [1,0,0, 2,0,4, 0,0,7]
+    "Dificil1": np.array([
+        [0,0,0, 0,0,0, 3,0,0],
+        [0,2,0, 6,0,0, 0,0,0],
+        [9,1,3, 0,0,2, 0,6,0],
+        [0,0,0, 3,0,7, 9,0,0],
+        [0,3,0, 0,8,0, 5,0,0],
+        [0,0,8, 0,0,0, 0,0,2],
+        [3,0,0, 0,5,6, 0,0,0],
+        [0,0,0, 2,0,0, 6,7,0],
+        [5,0,2, 8,0,0, 0,0,0]
+    ]),
+    
+    "Dificil2": np.array([
+        [0,0,0, 0,0,3, 0,1,7],
+        [0,1,5, 0,0,9, 0,0,8],
+        [0,6,0, 0,0,0, 0,0,0],
+        [1,0,0, 0,0,7, 0,0,0],
+        [0,0,9, 0,0,0, 2,0,0],
+        [0,0,0, 5,0,0, 0,0,4],
+        [0,0,0, 0,0,0, 0,2,0],
+        [5,0,0, 6,0,0, 3,4,0],
+        [3,4,0, 2,0,0, 0,0,0]
+    ]),
+    
+    "Dificil3": np.array([
+        [0,0,0, 7,0,0, 8,0,0],
+        [0,0,6, 0,0,0, 0,3,1],
+        [0,4,0, 0,0,2, 0,0,0],
+        [0,2,4, 0,7,0, 0,0,0],
+        [0,1,0, 0,3,0, 0,8,0],
+        [0,0,0, 0,6,0, 2,9,0],
+        [0,0,0, 8,0,0, 0,7,0],
+        [8,6,0, 0,0,0, 5,0,0],
+        [0,0,2, 0,0,6, 0,0,0]
     ])
 }
 
@@ -118,7 +142,6 @@ def executar_teste(nome, matriz, populacao=600, geracoes=300, mutacao=10):
     for linha in linhas:
         if 'melhor fitness' in linha.lower():
             try:
-                # Extrai iteração e fitness
                 partes = linha.split(',')
                 for parte in partes:
                     if 'iteracao' in parte.lower():
@@ -146,20 +169,20 @@ def executar_teste(nome, matriz, populacao=600, geracoes=300, mutacao=10):
 
 def main():
     print("="*60)
-    print("TESTES DE SUDOKUS FÁCEIS")
+    print("TESTES DE SUDOKUS MÉDIOS E DIFÍCEIS")
     print("Algoritmo Genético com Operadores Permutacionais")
     print("="*60)
     
     resultados = []
     
-    # Testa sudokus fáceis
+    # Testa sudokus médios e difíceis com parâmetros mais agressivos
     for nome, matriz in SUDOKUS.items():
         resultado = executar_teste(
             nome, 
             matriz, 
-            populacao=600,    # População padrão
-            geracoes=300,     # Gerações moderadas
-            mutacao=10        # Taxa de mutação moderada
+            populacao=1000,   # População maior
+            geracoes=500,     # Mais gerações
+            mutacao=20        # Taxa de mutação alta
         )
         resultados.append(resultado)
     
