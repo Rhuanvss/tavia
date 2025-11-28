@@ -157,9 +157,9 @@ def main():
         resultado = executar_teste(
             nome, 
             matriz, 
-            populacao=600,    # População padrão
-            geracoes=300,     # Gerações moderadas
-            mutacao=10        # Taxa de mutação moderada
+            populacao=800,    # População maior
+            geracoes=400,     # Mais gerações
+            mutacao=15        # Taxa de mutação um pouco maior
         )
         resultados.append(resultado)
     

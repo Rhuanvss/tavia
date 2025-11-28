@@ -397,6 +397,92 @@ def mutacao_permutacional(filho, parametros):
     return individuo
 
 '''
+    Função mutacao_coluna_auxiliar:
+        Realiza mutação por coluna: troca valores entre duas linhas diferentes na mesma coluna.
+        Isso permite resolver conflitos de coluna que a mutação por linha não consegue.
+        Preserva as permutações das linhas afetadas.
+    Parâmetros:
+        matriz - matriz do indivíduo a ser mutado.
+        taxa_mutacao - taxa de mutação (0 a 100).
+        matriz_base - matriz base com células fixas.
+    Retorno:
+        Matriz após ser mutada.
+'''
+@njit
+def mutacao_coluna_auxiliar(matriz, taxa_mutacao, matriz_base):
+    nova_matriz = matriz.copy()
+    probabilidade_mutacao = taxa_mutacao / 100
+    
+    # Para cada coluna, verifica se haverá mutação
+    for coluna in range(9):
+        if np.random.random() <= probabilidade_mutacao:
+            # Identifica linhas que têm células não-fixas nesta coluna
+            linhas_nao_fixas_count = 0
+            linhas_nao_fixas = np.zeros(9, dtype=np.int64)
+            
+            for linha in range(9):
+                if matriz_base[linha, coluna] == 0:
+                    linhas_nao_fixas[linhas_nao_fixas_count] = linha
+                    linhas_nao_fixas_count += 1
+            
+            # Se houver pelo menos 2 linhas não-fixas nesta coluna
+            if linhas_nao_fixas_count >= 2:
+                # Escolhe 2 linhas aleatórias diferentes
+                idx1, idx2 = np.random.choice(np.arange(linhas_nao_fixas_count), 2, replace=False)
+                linha1 = linhas_nao_fixas[idx1]
+                linha2 = linhas_nao_fixas[idx2]
+                
+                # Pega os valores atuais nas duas posições
+                valor1 = nova_matriz[linha1, coluna]
+                valor2 = nova_matriz[linha2, coluna]
+                
+                # Encontra onde valor2 está na linha1 e valor1 está na linha2
+                # para fazer a troca mantendo as permutações válidas
+                col_valor2_em_linha1 = -1
+                col_valor1_em_linha2 = -1
+                
+                for c in range(9):
+                    if nova_matriz[linha1, c] == valor2 and matriz_base[linha1, c] == 0:
+                        col_valor2_em_linha1 = c
+                    if nova_matriz[linha2, c] == valor1 and matriz_base[linha2, c] == 0:
+                        col_valor1_em_linha2 = c
+                
+                # Se encontrou posições válidas para troca, faz a troca coordenada
+                if col_valor2_em_linha1 != -1 and col_valor1_em_linha2 != -1:
+                    # Troca na linha1: posição da coluna alvo <-> posição onde está valor2
+                    nova_matriz[linha1, coluna] = valor2
+                    nova_matriz[linha1, col_valor2_em_linha1] = valor1
+                    
+                    # Troca na linha2: posição da coluna alvo <-> posição onde está valor1  
+                    nova_matriz[linha2, coluna] = valor1
+                    nova_matriz[linha2, col_valor1_em_linha2] = valor2
+    
+    return nova_matriz
+
+'''
+    Função mutacao_coluna:
+        Utiliza a função mutacao_coluna_auxiliar para realizar mutação por troca entre linhas.
+    Parâmetros:
+        filho - um dos indivíduos da população.
+        parametros - classe Parametros.
+    Retorno:
+        Indivíduo mutado.
+'''
+def mutacao_coluna(filho, parametros):
+    individuo = Individuo(filho.fitness, filho.matriz)
+
+    # Certifica que a matriz do filho não é None
+    if filho.matriz is None:
+        return Individuo(filho.fitness, None)
+
+    # Realiza a mutação por coluna
+    matriz_mutada = mutacao_coluna_auxiliar(filho.matriz, parametros.mutacao, parametros.matriz_base)
+    
+    individuo.matriz = matriz_mutada
+
+    return individuo
+
+'''
     Função recombinacao_uniforme_auxiliar:
         Aplica a recombinação uniforme, combinando aleatoriamente os genes (cada célula)
         da matriz pai e mãe nas células do filho que podem ser recombinadas, ou seja, que não são fixas.
@@ -671,6 +757,7 @@ def reproducao(populacao, parametros):
         #filho = recombinacao_uniforme(pai, mae, parametros)
         #filho = recombinacao_ponto_unico(pai, mae, parametros)
         filho = mutacao_permutacional(filho, parametros)
+        filho = mutacao_coluna(filho, parametros)  # Aplica mutação por coluna para resolver conflitos entre linhas
         #filho = mutacao_uniforme(filho, parametros)
         #filho = mutacao_por_troca(filho, parametros)
         #filho = mutacao_por_gene(filho, parametros)
