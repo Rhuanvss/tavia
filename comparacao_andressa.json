@@ -1,0 +1,75 @@
+{
+  "resultados": [
+    {
+      "fitness": 0,
+      "tempo": 7.695152044296265,
+      "sucesso": true
+    },
+    {
+      "fitness": 0,
+      "tempo": 8.817332029342651,
+      "sucesso": true
+    },
+    {
+      "fitness": 0,
+      "tempo": 6.081213712692261,
+      "sucesso": true
+    },
+    {
+      "fitness": 4,
+      "tempo": 17.25910234451294,
+      "sucesso": false
+    },
+    {
+      "fitness": 0,
+      "tempo": 6.014832019805908,
+      "sucesso": true
+    },
+    {
+      "fitness": 0,
+      "tempo": 5.902521133422852,
+      "sucesso": true
+    },
+    {
+      "fitness": 0,
+      "tempo": 6.452669382095337,
+      "sucesso": true
+    },
+    {
+      "fitness": 0,
+      "tempo": 5.315139293670654,
+      "sucesso": true
+    },
+    {
+      "fitness": 0,
+      "tempo": 5.962602376937866,
+      "sucesso": true
+    },
+    {
+      "fitness": 2,
+      "tempo": 16.12094235420227,
+      "sucesso": false
+    }
+  ],
+  "estatisticas": {
+    "fitness_valores": [
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2
+    ],
+    "taxa_sucesso": 80.0,
+    "fitness_medio": 0.6,
+    "fitness_desvio": 1.2806248474865698,
+    "fitness_min": 0,
+    "fitness_max": 4,
+    "tempo_medio": 8.5621506690979,
+    "tempo_total": 85.621506690979
+  }
+}
